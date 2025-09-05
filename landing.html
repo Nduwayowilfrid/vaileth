@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to VailethChat{% endblock %}
+
+{% block body_class %}landing-page{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+        <div class="row w-100">
+            <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center">
+                <div class="landing-image">
+                    <i class="fas fa-comments landing-icon"></i>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+                <div class="landing-content text-center">
+                    <div class="mb-4">
+                        <h1 class="display-4 fw-bold text-primary mb-3">
+                            <i class="fas fa-comments me-3"></i>VailethChat
+                        </h1>
+                        <p class="lead text-muted mb-4">
+                            Connect with friends and family instantly. Fast, reliable, and secure messaging for everyone.
+                        </p>
+                    </div>
+                    
+                    <div class="features mb-5">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-bolt text-warning mb-2"></i>
+                                    <h6>Lightning Fast</h6>
+                                    <small class="text-muted">Instant message delivery</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-shield-alt text-success mb-2"></i>
+                                    <h6>Secure</h6>
+                                    <small class="text-muted">Your privacy protected</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-users text-info mb-2"></i>
+                                    <h6>Group Chats</h6>
+                                    <small class="text-muted">Connect with groups</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-mobile-alt text-primary mb-2"></i>
+                                    <h6>Mobile Ready</h6>
+                                    <small class="text-muted">Works on any device</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-buttons">
+                        <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Get Started
+                        </a>
+                        <p class="mt-3 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Sign in to start messaging
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

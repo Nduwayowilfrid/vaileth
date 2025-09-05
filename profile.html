@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - VailethChat{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <!-- Header -->
+                    <div class="d-flex align-items-center mb-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-link text-muted p-0 me-3">
+                            <i class="fas fa-arrow-left fa-lg"></i>
+                        </a>
+                        <h4 class="mb-0">Profile</h4>
+                    </div>
+
+                    <!-- Profile Image -->
+                    <div class="text-center mb-4">
+                        <div class="profile-image-container position-relative d-inline-block">
+                            {% if user.profile_image_url %}
+                                <img src="{{ user.profile_image_url }}" 
+                                     alt="Profile" 
+                                     class="profile-image rounded-circle">
+                            {% else %}
+                                <div class="profile-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-user fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <button class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0" 
+                                    title="Change photo">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'info' }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Profile Form -->
+                    <form method="POST" action="{{ url_for('update_profile') }}">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-user me-2"></i>First Name
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="first_name" 
+                                   name="first_name" 
+                                   value="{{ user.first_name or '' }}"
+                                   placeholder="Enter your first name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">
+                                <i class="fas fa-user me-2"></i>Last Name
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="last_name" 
+                                   name="last_name" 
+                                   value="{{ user.last_name or '' }}"
+                                   placeholder="Enter your last name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   value="{{ user.email or '' }}"
+                                   disabled
+                                   readonly>
+                            <small class="form-text text-muted">Email cannot be changed</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">
+                                <i class="fas fa-phone me-2"></i>Phone Number
+                            </label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="phone_number" 
+                                   name="phone_number" 
+                                   value="{{ user.phone_number or '' }}"
+                                   placeholder="Enter your phone number">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="status_message" class="form-label">
+                                <i class="fas fa-quote-left me-2"></i>Status Message
+                            </label>
+                            <textarea class="form-control" 
+                                      id="status_message" 
+                                      name="status_message" 
+                                      rows="3" 
+                                      maxlength="139"
+                                      placeholder="What's on your mind?">{{ user.status_message or '' }}</textarea>
+                            <small class="form-text text-muted">
+                                <span id="charCount">{{ (user.status_message or '')|length }}</span>/139 characters
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Account Info -->
+                    <div class="mt-4 pt-4 border-top">
+                        <h6 class="text-muted mb-3">Account Information</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Member since</small>
+                                <div>{{ user.created_at.strftime('%B %Y') }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Last updated</small>
+                                <div>{{ user.updated_at.strftime('%d %b %Y') }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 pt-4 border-top">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('contacts') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-address-book me-2"></i>Manage Contacts
+                            </a>
+                            <a href="{{ url_for('replit_auth.logout') }}" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Character counter for status message
+document.getElementById('status_message').addEventListener('input', function() {
+    const charCount = this.value.length;
+    document.getElementById('charCount').textContent = charCount;
+    
+    if (charCount > 139) {
+        this.value = this.value.substring(0, 139);
+        document.getElementById('charCount').textContent = 139;
+    }
+});
+</script>
+{% endblock %}

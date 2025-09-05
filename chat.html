@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}VailethChat - Chat{% endblock %}
+
+{% block body_class %}chat-page{% endblock %}
+
+{% block content %}
+<div class="chat-container d-flex vh-100">
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+        <!-- Header -->
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        {% if user.profile_image_url %}
+                            <img src="{{ user.profile_image_url }}" alt="Profile" class="rounded-circle">
+                        {% else %}
+                            <div class="avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h6 class="mb-0 text-white">{{ user.display_name }}</h6>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-link text-white p-0" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                            <i class="fas fa-user me-2"></i>Profile
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('contacts') }}">
+                            <i class="fas fa-address-book me-2"></i>Contacts
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('create_group') }}">
+                            <i class="fas fa-users me-2"></i>New Group
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('replit_auth.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-0" id="searchInput" 
+                       placeholder="Search or start new chat">
+            </div>
+        </div>
+
+        <!-- Chat List -->
+        <div class="chat-list">
+            {% if recent_chats %}
+                {% for chat in recent_chats %}
+                <div class="chat-item {% if current_chat and current_chat.id == chat.id %}active{% endif %}" 
+                     data-chat-id="{{ chat.id }}">
+                    <a href="{{ url_for('view_chat', chat_id=chat.id) }}" class="text-decoration-none">
+                        <div class="d-flex align-items-center p-3">
+                            <div class="chat-avatar me-3">
+                                {% if chat.chat_type == 'group' %}
+                                    <div class="avatar-placeholder group-avatar">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                {% else %}
+                                    {% set other_member = chat.members.filter_by(user_id!=user.id).first() %}
+                                    {% if other_member and other_member.user.profile_image_url %}
+                                        <img src="{{ other_member.user.profile_image_url }}" 
+                                             alt="Profile" class="rounded-circle">
+                                    {% else %}
+                                        <div class="avatar-placeholder">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="chat-info flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="chat-name mb-1">
+                                        {% if chat.chat_type == 'group' %}
+                                            {{ chat.name }}
+                                        {% else %}
+                                            {% set other_member = chat.members.filter_by(user_id!=user.id).first() %}
+                                            {{ other_member.user.display_name if other_member else 'Unknown User' }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ chat.updated_at.strftime('%H:%M') if chat.updated_at.date() == moment().date() 
+                                           else chat.updated_at.strftime('%d/%m') }}
+                                    </small>
+                                </div>
+                                {% set last_message = chat.messages.order_by(chat.messages.created_at.desc()).first() %}
+                                {% if last_message %}
+                                <p class="chat-preview mb-0 text-muted">
+                                    {% if last_message.sender_id == user.id %}
+                                        <i class="fas fa-check{% if last_message.is_read %}-double text-primary{% endif %} me-1"></i>
+                                    {% endif %}
+                                    {{ last_message.content[:50] }}{% if last_message.content|length > 50 %}...{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Contacts Section -->
+            <div class="contacts-section">
+                <div class="section-header p-3">
+                    <h6 class="text-muted mb-0">
+                        <i class="fas fa-address-book me-2"></i>Contacts
+                    </h6>
+                </div>
+                {% for contact in contacts[:5] %}
+                <div class="contact-item">
+                    <a href="{{ url_for('start_individual_chat', user_id=contact.contact_user_id) }}" 
+                       class="text-decoration-none">
+                        <div class="d-flex align-items-center p-3">
+                            <div class="contact-avatar me-3">
+                                {% if contact.contact_user.profile_image_url %}
+                                    <img src="{{ contact.contact_user.profile_image_url }}" 
+                                         alt="Profile" class="rounded-circle">
+                                {% else %}
+                                    <div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                {% if contact.contact_user.is_online %}
+                                    <span class="online-indicator"></span>
+                                {% endif %}
+                            </div>
+                            <div class="contact-info">
+                                <h6 class="contact-name mb-1">
+                                    {{ contact.contact_name or contact.contact_user.display_name }}
+                                </h6>
+                                <p class="contact-status mb-0 text-muted">
+                                    {{ contact.contact_user.status_message[:30] }}{% if contact.contact_user.status_message|length > 30 %}...{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+                {% if contacts|length > 5 %}
+                <div class="p-3">
+                    <a href="{{ url_for('contacts') }}" class="btn btn-outline-primary btn-sm w-100">
+                        View All Contacts
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="chat-main flex-grow-1">
+        {% if current_chat %}
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="chat-avatar me-3">
+                            {% if current_chat.chat_type == 'group' %}
+                                <div class="avatar-placeholder group-avatar">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            {% else %}
+                                {% set other_member = current_chat.members.filter(current_chat.members.c.user_id != user.id).first() %}
+                                {% if other_member and other_member.user.profile_image_url %}
+                                    <img src="{{ other_member.user.profile_image_url }}" 
+                                         alt="Profile" class="rounded-circle">
+                                {% else %}
+                                    <div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="chat-info">
+                            <h6 class="mb-0">
+                                {% if current_chat.chat_type == 'group' %}
+                                    {{ current_chat.name }}
+                                {% else %}
+                                    {% set other_member = current_chat.members.filter(current_chat.members.c.user_id != user.id).first() %}
+                                    {{ other_member.user.display_name if other_member else 'Unknown User' }}
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">
+                                {% if current_chat.chat_type == 'group' %}
+                                    {{ current_chat.members.count() }} members
+                                {% else %}
+                                    {% set other_member = current_chat.members.filter(current_chat.members.c.user_id != user.id).first() %}
+                                    {% if other_member %}
+                                        {% if other_member.user.is_online %}
+                                            online
+                                        {% else %}
+                                            last seen {{ other_member.user.last_seen.strftime('%H:%M') }}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn btn-link text-muted p-2" title="Search in chat">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button class="btn btn-link text-muted p-2" title="Call" onclick="simulateCall()">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn btn-link text-muted p-2" title="Video call" onclick="simulateVideoCall()">
+                            <i class="fas fa-video"></i>
+                        </button>
+                        <div class="dropdown d-inline">
+                            <button class="btn btn-link text-muted p-2" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-info-circle me-2"></i>Chat Info
+                                </a></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-bell-slash me-2"></i>Mute
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="messages-container" id="messagesContainer">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message {% if message.sender_id == user.id %}sent{% else %}received{% endif %}">
+                        <div class="message-bubble">
+                            {% if message.sender_id != user.id and current_chat.chat_type == 'group' %}
+                                <div class="message-sender">{{ message.sender.display_name }}</div>
+                            {% endif %}
+                            <div class="message-content">
+                                {{ message.content }}
+                            </div>
+                            <div class="message-time">
+                                {{ message.created_at.strftime('%H:%M') }}
+                                {% if message.sender_id == user.id %}
+                                    <i class="fas fa-check{% if message.is_read %}-double text-primary{% elif message.is_delivered %} text-muted{% endif %} ms-1"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-messages text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>No messages yet. Start the conversation!</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-container">
+                <form id="messageForm" class="d-flex align-items-center">
+                    <input type="hidden" name="chat_id" value="{{ current_chat.id }}">
+                    <button type="button" class="btn btn-link text-muted p-2" title="Attach">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <div class="input-group flex-grow-1 mx-2">
+                        <input type="text" name="content" id="messageInput" 
+                               class="form-control border-0" 
+                               placeholder="Type a message..."
+                               autocomplete="off">
+                        <button type="button" class="btn btn-link text-muted p-2" title="Emoji">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-circle p-2" title="Send">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <!-- Welcome Screen -->
+            <div class="welcome-screen d-flex align-items-center justify-content-center h-100">
+                <div class="text-center">
+                    <i class="fas fa-comments welcome-icon mb-4"></i>
+                    <h3 class="mb-3">Welcome to VailethChat</h3>
+                    <p class="text-muted mb-4">Select a chat to start messaging</p>
+                    <a href="{{ url_for('contacts') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Start New Chat
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Call Simulation Modal -->
+<div class="modal fade" id="callModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="call-avatar mb-3">
+                    <i class="fas fa-user fa-3x text-muted"></i>
+                </div>
+                <h5 class="mb-2" id="callContactName">Contact Name</h5>
+                <p class="text-muted mb-4" id="callStatus">Calling...</p>
+                <div class="call-actions">
+                    <button class="btn btn-danger rounded-circle p-3 me-3" onclick="endCall()">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                    <button class="btn btn-success rounded-circle p-3" onclick="answerCall()">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

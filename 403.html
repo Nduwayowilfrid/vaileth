@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication Error - VailethChat{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+    <div class="text-center">
+        <div class="error-icon mb-4">
+            <i class="fas fa-exclamation-triangle fa-5x text-warning"></i>
+        </div>
+        <h1 class="display-4 mb-3">Authentication Error</h1>
+        <p class="lead text-muted mb-4">
+            There was a problem with your authentication. Please try logging in again.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Go Home
+            </a>
+            <a href="{{ url_for('replit_auth.login') }}" class="btn btn-outline-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>Try Again
+            </a>
+        </div>
+        
+        <div class="mt-5">
+            <small class="text-muted">
+                If this problem persists, please contact support.
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
